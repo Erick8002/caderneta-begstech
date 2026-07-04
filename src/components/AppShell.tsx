@@ -29,6 +29,7 @@ interface NavItem {
   label: string;
   icon: typeof LayoutDashboard;
   adminOnly?: boolean;
+  activePath?: string;
 }
 
 const NAV: NavItem[] = [
@@ -36,7 +37,7 @@ const NAV: NavItem[] = [
   { to: "/vendas", label: "Vendas", icon: ShoppingCart },
   { to: "/estoque", label: "Estoque", icon: Package },
   { to: "/clientes", label: "Clientes", icon: Users },
-  { to: "/fornecedores", label: "Fornecedores", icon: Truck },
+  { to: "/fornecedores", label: "Fornecedores", icon: Truck, adminOnly: true },
   { to: "/fiado", label: "Fiado", icon: CreditCard },
   { to: "/financeiro", label: "Financeiro", icon: Wallet, adminOnly: true },
   { to: "/admin/aprovacoes", label: "Aprovações", icon: UserCheck, adminOnly: true },
@@ -48,7 +49,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
 
-  const items = NAV.filter((n) => !n.adminOnly || isAdmin);
+  const items = NAV.filter((n) => !n.adminOnly || isAdmin).map((item) =>
+    item.to === "/vendas" && !isAdmin
+      ? { ...item, to: "/vendas/nova", activePath: "/vendas" }
+      : item,
+  );
 
   const { data: pendentes = 0 } = useQuery({
     queryKey: ["aprovacoes-pendentes-count", isAdmin],
@@ -138,10 +143,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="md:hidden flex items-center gap-2">
+            <Link
+              to="/dashboard"
+              className="md:hidden flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              aria-label="Voltar para a tela inicial"
+            >
               <Store className="h-5 w-5 text-primary" />
               <span className="font-semibold">BEGSTech</span>
-            </div>
+            </Link>
             {isAdmin && pendentes > 0 && (
               <Link to="/admin/aprovacoes" className="hidden sm:inline-flex">
                 <Button variant="outline" size="sm" className="gap-2">
@@ -186,7 +195,12 @@ function SidebarInner({
 }) {
   return (
     <>
-      <div className="h-16 flex items-center gap-3 px-5 border-b border-sidebar-border">
+      <Link
+        to="/dashboard"
+        onClick={onNavigate}
+        className="h-16 flex items-center gap-3 px-5 border-b border-sidebar-border hover:bg-sidebar-accent/40 transition-colors focus:outline-none focus:ring-2 focus:ring-sidebar-ring focus:ring-inset"
+        aria-label="Voltar para a tela inicial"
+      >
         <div className="h-9 w-9 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
           <Store className="h-5 w-5 text-sidebar-primary-foreground" />
         </div>
@@ -194,13 +208,13 @@ function SidebarInner({
           <div className="font-semibold leading-tight">BEGSTech</div>
           <div className="text-xs opacity-70">Caderneta Digital</div>
         </div>
-      </div>
+      </Link>
       <nav className="flex-1 py-4 px-2 space-y-1">
         {items.map((item) => {
           const active =
             item.to === "/dashboard"
               ? pathname === "/" || pathname === "/dashboard"
-              : pathname.startsWith(item.to);
+              : pathname.startsWith(item.activePath ?? item.to);
           const Icon = item.icon;
           const showPending = item.to === "/admin/aprovacoes" && !!pendentes;
           return (

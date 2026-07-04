@@ -102,13 +102,17 @@ function ProdutoDetalhes() {
             <p className="text-sm text-muted-foreground">
               SKU: {p.sku ?? "-"} · Categoria: {p.categoria ?? "-"} · Fornecedor:{" "}
               {p.fornecedores ? (
-                <Link
-                  to="/fornecedores/$id"
-                  params={{ id: p.fornecedores.id }}
-                  className="underline"
-                >
-                  {p.fornecedores.nome}
-                </Link>
+                isAdmin ? (
+                  <Link
+                    to="/fornecedores/$id"
+                    params={{ id: p.fornecedores.id }}
+                    className="underline"
+                  >
+                    {p.fornecedores.nome}
+                  </Link>
+                ) : (
+                  p.fornecedores.nome
+                )
               ) : (
                 "—"
               )}

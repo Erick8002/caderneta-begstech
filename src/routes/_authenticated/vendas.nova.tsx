@@ -161,102 +161,13 @@ function NovaVenda() {
       <div className="grid gap-4 xl:grid-cols-[1.4fr_0.9fr]">
         <div className="space-y-4">
           <Card className="rounded-3xl">
-            <CardContent className="p-4">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    placeholder="Buscar produto..."
-                    className="rounded-2xl pl-9"
-                  />
-                </div>
-                <Button type="button" variant="outline" size="icon" className="rounded-2xl">
-                  <Camera className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-            {produtosFiltrados.map((produto) => {
-              const quantidadeSelecionada = qtdDoProduto(produto.id);
-              const baixo = produto.quantidade <= produto.estoque_minimo;
-              return (
-                <Card key={produto.id} className="overflow-hidden rounded-3xl border shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border bg-muted/40">
-                        <ProductImage src={produto.foto_url} alt={produto.nome} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="line-clamp-2 text-base font-semibold">{produto.nome}</h3>
-                            <p className="mt-1 text-lg font-bold text-green-600">
-                              {formatBRL(produto.valor_venda)}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <Button
-                              type="button"
-                              size="icon"
-                              className="h-10 w-10 rounded-full"
-                              onClick={() => alterarQuantidade(produto, 1)}
-                              disabled={quantidadeSelecionada >= produto.quantidade}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                            <span className="text-base font-semibold">{quantidadeSelecionada}</span>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="outline"
-                              className="h-9 w-9 rounded-full"
-                              onClick={() => alterarQuantidade(produto, -1)}
-                              disabled={quantidadeSelecionada === 0}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {produto.quantidade <= 0 ? (
-                            <Badge variant="destructive">Sem estoque</Badge>
-                          ) : baixo ? (
-                            <Badge variant="destructive">Baixo estoque</Badge>
-                          ) : (
-                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-                              Em estoque
-                            </Badge>
-                          )}
-                          <Badge variant="secondary">{produto.quantidade} un</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-            {produtosFiltrados.length === 0 && (
-              <Card className="rounded-3xl">
-                <CardContent className="p-10 text-center text-sm text-muted-foreground">
-                  Nenhum produto encontrado.
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-
-        <Card className="h-fit rounded-3xl lg:sticky lg:top-4">
-          <CardHeader>
-            <CardTitle className="text-base">Resumo da venda</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Cliente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 p-4 pt-0">
               <Label>
-                Cliente {forma === "fiado" && <span className="text-destructive">*</span>}
+                Selecionar cliente{" "}
+                {forma === "fiado" && <span className="text-destructive">*</span>}
               </Label>
               <Select value={clienteId} onValueChange={setClienteId}>
                 <SelectTrigger className="rounded-2xl">
@@ -275,8 +186,115 @@ function NovaVenda() {
                   {clienteSel.qtd_compras} compras · Fiado disponível: {formatBRL(disponivel)}
                 </p>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
+          <Card className="rounded-3xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Produtos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-4 pt-0">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    placeholder="Buscar produto..."
+                    className="rounded-2xl pl-9"
+                  />
+                </div>
+                <Button type="button" variant="outline" size="icon" className="rounded-2xl">
+                  <Camera className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="h-[285px] overflow-y-auto pr-2 overscroll-contain rounded-2xl sm:h-[310px]">
+                <div className="grid gap-3">
+                  {produtosFiltrados.map((produto) => {
+                    const quantidadeSelecionada = qtdDoProduto(produto.id);
+                    const baixo = produto.quantidade <= produto.estoque_minimo;
+                    return (
+                      <Card
+                        key={produto.id}
+                        className="overflow-hidden rounded-3xl border shadow-sm"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border bg-muted/40">
+                              <ProductImage src={produto.foto_url} alt={produto.nome} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <h3 className="line-clamp-2 text-base font-semibold">
+                                    {produto.nome}
+                                  </h3>
+                                  <p className="mt-1 text-lg font-bold text-green-600">
+                                    {formatBRL(produto.valor_venda)}
+                                  </p>
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    className="h-10 w-10 rounded-full"
+                                    onClick={() => alterarQuantidade(produto, 1)}
+                                    disabled={quantidadeSelecionada >= produto.quantidade}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                  <span className="text-base font-semibold">
+                                    {quantidadeSelecionada}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-9 w-9 rounded-full"
+                                    onClick={() => alterarQuantidade(produto, -1)}
+                                    disabled={quantidadeSelecionada === 0}
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {produto.quantidade <= 0 ? (
+                                  <Badge variant="destructive">Sem estoque</Badge>
+                                ) : baixo ? (
+                                  <Badge variant="destructive">Baixo estoque</Badge>
+                                ) : (
+                                  <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                                    Em estoque
+                                  </Badge>
+                                )}
+                                <Badge variant="secondary">{produto.quantidade} un</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                  {produtosFiltrados.length === 0 && (
+                    <Card className="rounded-3xl">
+                      <CardContent className="p-10 text-center text-sm text-muted-foreground">
+                        Nenhum produto encontrado.
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="h-fit rounded-3xl lg:sticky lg:top-4">
+          <CardHeader>
+            <CardTitle className="text-base">Resumo da venda</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Forma de pagamento</Label>
               <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>

@@ -56,7 +56,12 @@ function Dashboard() {
   });
 
   const cards = [
-    { to: "/vendas", label: "Vendas", icon: ShoppingCart, color: "bg-primary/10 text-primary" },
+    {
+      to: isAdmin ? "/vendas" : "/vendas/nova",
+      label: "Vendas",
+      icon: ShoppingCart,
+      color: "bg-primary/10 text-primary",
+    },
     {
       to: "/estoque",
       label: "Estoque",
@@ -70,12 +75,6 @@ function Dashboard() {
       color: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
     },
     {
-      to: "/fornecedores",
-      label: "Fornecedores",
-      icon: Truck,
-      color: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    },
-    {
       to: "/fiado",
       label: "Fiado",
       icon: CreditCard,
@@ -83,6 +82,12 @@ function Dashboard() {
     },
     ...(isAdmin
       ? [
+          {
+            to: "/fornecedores",
+            label: "Fornecedores",
+            icon: Truck,
+            color: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+          },
           {
             to: "/financeiro",
             label: "Financeiro",
@@ -100,6 +105,30 @@ function Dashboard() {
         <p className="text-muted-foreground">
           {isAdmin ? "Resumo geral da loja hoje." : "Resumo das suas vendas hoje."}
         </p>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Acesso rápido</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {cards.map((c) => {
+            const Icon = c.icon;
+            return (
+              <Link
+                key={c.to}
+                to={c.to}
+                className="group flex flex-col items-start gap-3 rounded-xl border bg-card p-4 hover:border-primary hover:shadow-sm transition"
+              >
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${c.color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium">{c.label}</span>
+                  <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition" />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -125,30 +154,6 @@ function Dashboard() {
           icon={CreditCard}
           tone={stats && stats.clientesDevendo > 0 ? "warning" : undefined}
         />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold mb-3">Acesso rápido</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {cards.map((c) => {
-            const Icon = c.icon;
-            return (
-              <Link
-                key={c.to}
-                to={c.to}
-                className="group flex flex-col items-start gap-3 rounded-xl border bg-card p-4 hover:border-primary hover:shadow-sm transition"
-              >
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${c.color}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-medium">{c.label}</span>
-                  <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFornecedoresIndexRouteImport } from './routes/_authenticated/fornecedores.index'
+import { Route as AuthenticatedEstoqueIndexRouteImport } from './routes/_authenticated/estoque.index'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedFornecedoresIdRouteImport } from './routes/_authenticated/fornecedores.$id'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
@@ -43,6 +44,12 @@ const AuthenticatedFornecedoresIndexRoute =
     path: '/fornecedores/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEstoqueIndexRoute =
+  AuthenticatedEstoqueIndexRouteImport.update({
+    id: '/estoque/',
+    path: '/estoque/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClientesIndexRoute =
   AuthenticatedClientesIndexRouteImport.update({
     id: '/clientes/',
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/fornecedores/$id': typeof AuthenticatedFornecedoresIdRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/estoque/': typeof AuthenticatedEstoqueIndexRoute
   '/fornecedores/': typeof AuthenticatedFornecedoresIndexRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +85,7 @@ export interface FileRoutesByTo {
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/fornecedores/$id': typeof AuthenticatedFornecedoresIdRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
+  '/estoque': typeof AuthenticatedEstoqueIndexRoute
   '/fornecedores': typeof AuthenticatedFornecedoresIndexRoute
 }
 export interface FileRoutesById {
@@ -88,6 +97,7 @@ export interface FileRoutesById {
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/_authenticated/fornecedores/$id': typeof AuthenticatedFornecedoresIdRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/_authenticated/estoque/': typeof AuthenticatedEstoqueIndexRoute
   '/_authenticated/fornecedores/': typeof AuthenticatedFornecedoresIndexRoute
 }
 export interface FileRouteTypes {
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/clientes/$id'
     | '/fornecedores/$id'
     | '/clientes/'
+    | '/estoque/'
     | '/fornecedores/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/clientes/$id'
     | '/fornecedores/$id'
     | '/clientes'
+    | '/estoque'
     | '/fornecedores'
   id:
     | '__root__'
@@ -118,6 +130,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes/$id'
     | '/_authenticated/fornecedores/$id'
     | '/_authenticated/clientes/'
+    | '/_authenticated/estoque/'
     | '/_authenticated/fornecedores/'
   fileRoutesById: FileRoutesById
 }
@@ -163,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFornecedoresIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/estoque/': {
+      id: '/_authenticated/estoque/'
+      path: '/estoque'
+      fullPath: '/estoque/'
+      preLoaderRoute: typeof AuthenticatedEstoqueIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clientes/': {
       id: '/_authenticated/clientes/'
       path: '/clientes'
@@ -193,6 +213,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesIdRoute: typeof AuthenticatedClientesIdRoute
   AuthenticatedFornecedoresIdRoute: typeof AuthenticatedFornecedoresIdRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
+  AuthenticatedEstoqueIndexRoute: typeof AuthenticatedEstoqueIndexRoute
   AuthenticatedFornecedoresIndexRoute: typeof AuthenticatedFornecedoresIndexRoute
 }
 
@@ -202,6 +223,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesIdRoute: AuthenticatedClientesIdRoute,
   AuthenticatedFornecedoresIdRoute: AuthenticatedFornecedoresIdRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
+  AuthenticatedEstoqueIndexRoute: AuthenticatedEstoqueIndexRoute,
   AuthenticatedFornecedoresIndexRoute: AuthenticatedFornecedoresIndexRoute,
 }
 

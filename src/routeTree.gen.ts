@@ -17,6 +17,7 @@ import { Route as AuthenticatedVendasIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFornecedoresIndexRouteImport } from './routes/_authenticated/fornecedores.index'
 import { Route as AuthenticatedEstoqueIndexRouteImport } from './routes/_authenticated/estoque.index'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
+import { Route as AuthenticatedVendasNovaRouteImport } from './routes/_authenticated/vendas.nova'
 import { Route as AuthenticatedFornecedoresIdRouteImport } from './routes/_authenticated/fornecedores.$id'
 import { Route as AuthenticatedEstoqueIdRouteImport } from './routes/_authenticated/estoque.$id'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
@@ -64,6 +65,11 @@ const AuthenticatedClientesIndexRoute =
     path: '/clientes/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedVendasNovaRoute = AuthenticatedVendasNovaRouteImport.update({
+  id: '/vendas/nova',
+  path: '/vendas/nova',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFornecedoresIdRoute =
   AuthenticatedFornecedoresIdRouteImport.update({
     id: '/fornecedores/$id',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/estoque/$id': typeof AuthenticatedEstoqueIdRoute
   '/fornecedores/$id': typeof AuthenticatedFornecedoresIdRoute
+  '/vendas/nova': typeof AuthenticatedVendasNovaRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
   '/estoque/': typeof AuthenticatedEstoqueIndexRoute
   '/fornecedores/': typeof AuthenticatedFornecedoresIndexRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/estoque/$id': typeof AuthenticatedEstoqueIdRoute
   '/fornecedores/$id': typeof AuthenticatedFornecedoresIdRoute
+  '/vendas/nova': typeof AuthenticatedVendasNovaRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/estoque': typeof AuthenticatedEstoqueIndexRoute
   '/fornecedores': typeof AuthenticatedFornecedoresIndexRoute
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/_authenticated/estoque/$id': typeof AuthenticatedEstoqueIdRoute
   '/_authenticated/fornecedores/$id': typeof AuthenticatedFornecedoresIdRoute
+  '/_authenticated/vendas/nova': typeof AuthenticatedVendasNovaRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/_authenticated/estoque/': typeof AuthenticatedEstoqueIndexRoute
   '/_authenticated/fornecedores/': typeof AuthenticatedFornecedoresIndexRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/clientes/$id'
     | '/estoque/$id'
     | '/fornecedores/$id'
+    | '/vendas/nova'
     | '/clientes/'
     | '/estoque/'
     | '/fornecedores/'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/clientes/$id'
     | '/estoque/$id'
     | '/fornecedores/$id'
+    | '/vendas/nova'
     | '/clientes'
     | '/estoque'
     | '/fornecedores'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes/$id'
     | '/_authenticated/estoque/$id'
     | '/_authenticated/fornecedores/$id'
+    | '/_authenticated/vendas/nova'
     | '/_authenticated/clientes/'
     | '/_authenticated/estoque/'
     | '/_authenticated/fornecedores/'
@@ -222,6 +234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/vendas/nova': {
+      id: '/_authenticated/vendas/nova'
+      path: '/vendas/nova'
+      fullPath: '/vendas/nova'
+      preLoaderRoute: typeof AuthenticatedVendasNovaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/fornecedores/$id': {
       id: '/_authenticated/fornecedores/$id'
       path: '/fornecedores/$id'
@@ -252,6 +271,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesIdRoute: typeof AuthenticatedClientesIdRoute
   AuthenticatedEstoqueIdRoute: typeof AuthenticatedEstoqueIdRoute
   AuthenticatedFornecedoresIdRoute: typeof AuthenticatedFornecedoresIdRoute
+  AuthenticatedVendasNovaRoute: typeof AuthenticatedVendasNovaRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
   AuthenticatedEstoqueIndexRoute: typeof AuthenticatedEstoqueIndexRoute
   AuthenticatedFornecedoresIndexRoute: typeof AuthenticatedFornecedoresIndexRoute
@@ -264,6 +284,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesIdRoute: AuthenticatedClientesIdRoute,
   AuthenticatedEstoqueIdRoute: AuthenticatedEstoqueIdRoute,
   AuthenticatedFornecedoresIdRoute: AuthenticatedFornecedoresIdRoute,
+  AuthenticatedVendasNovaRoute: AuthenticatedVendasNovaRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
   AuthenticatedEstoqueIndexRoute: AuthenticatedEstoqueIndexRoute,
   AuthenticatedFornecedoresIndexRoute: AuthenticatedFornecedoresIndexRoute,

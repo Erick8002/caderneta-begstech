@@ -104,7 +104,7 @@ function NovaVenda() {
   const criar = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc("criar_venda", {
-        p_cliente_id: clienteId || null,
+        p_cliente_id: (clienteId || null) as string,
         p_forma_pagamento: forma,
         p_itens: itens.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade })),
       });

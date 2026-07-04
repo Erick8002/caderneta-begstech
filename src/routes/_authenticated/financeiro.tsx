@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,61 @@ export const Route = createFileRoute("/_authenticated/financeiro")({
   component: FinanceiroPage,
 });
 
+type FormaPagamento = "dinheiro" | "pix" | "cartao" | "fiado";
+
+type FinanceiroResumo = {
+  total_vendido: number;
+  custo_total: number;
+  lucro_total: number;
+  total_fiado: number;
+  vendas_periodo: number;
+  vendas_canceladas: number;
+  total_hoje: number;
+  lucro_hoje: number;
+  total_mes: number;
+  lucro_mes: number;
+};
+
+type FinanceiroDados = {
+  resumo: FinanceiroResumo;
+  vendas_por_dia: Array<{ data: string; total: number; lucro: number }>;
+  ranking_vendedores: Array<{
+    vendedor_id: string;
+    nome: string;
+    total: number;
+    lucro: number;
+    qtd: number;
+  }>;
+  por_forma_pagamento: Array<{ forma: FormaPagamento; total: number }>;
+  vendedores: Array<{ id: string; nome: string }>;
+};
+
+const resumoVazio: FinanceiroResumo = {
+  total_vendido: 0,
+  custo_total: 0,
+  lucro_total: 0,
+  total_fiado: 0,
+  vendas_periodo: 0,
+  vendas_canceladas: 0,
+  total_hoje: 0,
+  lucro_hoje: 0,
+  total_mes: 0,
+  lucro_mes: 0,
+};
+
+const financeiroVazio: FinanceiroDados = {
+  resumo: resumoVazio,
+  vendas_por_dia: [],
+  ranking_vendedores: [],
+  por_forma_pagamento: [
+    { forma: "dinheiro", total: 0 },
+    { forma: "pix", total: 0 },
+    { forma: "cartao", total: 0 },
+    { forma: "fiado", total: 0 },
+  ],
+  vendedores: [],
+};
+
 function FinanceiroPage() {
   const [dataDe, setDataDe] = useState<string>(() => {
     const d = new Date();
@@ -51,105 +106,29 @@ function FinanceiroPage() {
   const [formaFilter, setFormaFilter] = useState<string>("todas");
   const [vendedorFilter, setVendedorFilter] = useState<string>("todos");
 
-  const { data: vendas = [] } = useQuery({
-    queryKey: ["fin-vendas", dataDe, dataAte],
+  const {
+    data: financeiro = financeiroVazio,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["financeiro-admin", dataDe, dataAte, formaFilter, vendedorFilter],
     queryFn: async () => {
-      const de = new Date(dataDe);
-      const ate = new Date(dataAte);
-      ate.setHours(23, 59, 59, 999);
-      const { data, error } = await supabase
-        .from("vendas")
-        .select(
-          "id, criado_em, valor_total, custo_total, lucro_total, forma_pagamento, status, vendedor_id, cliente_id",
-        )
-        .gte("criado_em", de.toISOString())
-        .lte("criado_em", ate.toISOString());
+      const { data, error } = await supabase.rpc("financeiro_admin_dados", {
+        p_data_inicio: dataDe || null,
+        p_data_fim: dataAte || null,
+        p_vendedor_id: vendedorFilter === "todos" ? null : vendedorFilter,
+        p_forma_pagamento: formaFilter === "todas" ? null : formaFilter,
+      });
+
       if (error) throw error;
-      return data;
+      return normalizarFinanceiro(data as unknown);
     },
   });
 
-  const { data: perfis = [] } = useQuery({
-    queryKey: ["profiles-fin"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, nome");
-      if (error) throw error;
-      return data;
-    },
-  });
-  const perfilMap = useMemo(() => Object.fromEntries(perfis.map((p) => [p.id, p.nome])), [perfis]);
-
-  const { data: totalFiado = 0 } = useQuery({
-    queryKey: ["fin-total-fiado"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("clientes").select("saldo_devedor");
-      if (error) throw error;
-      return (data ?? []).reduce((s, c) => s + Number(c.saldo_devedor), 0);
-    },
-  });
-
-  const filtradas = vendas.filter((v) => {
-    if (formaFilter !== "todas" && v.forma_pagamento !== formaFilter) return false;
-    if (vendedorFilter !== "todos" && v.vendedor_id !== vendedorFilter) return false;
-    return true;
-  });
-
-  const validas = filtradas.filter((v) => v.status !== "cancelada");
-  const canceladas = filtradas.filter((v) => v.status === "cancelada");
-
-  const totalVendido = validas.reduce((s, v) => s + Number(v.valor_total), 0);
-  const custoTotal = validas.reduce((s, v) => s + Number(v.custo_total), 0);
-  const lucroTotal = validas.reduce((s, v) => s + Number(v.lucro_total), 0);
-
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const vendasHoje = validas.filter((v) => new Date(v.criado_em) >= hoje);
-  const totalHoje = vendasHoje.reduce((s, v) => s + Number(v.valor_total), 0);
-  const lucroHoje = vendasHoje.reduce((s, v) => s + Number(v.lucro_total), 0);
-
-  const mesAtual = new Date();
-  mesAtual.setDate(1);
-  mesAtual.setHours(0, 0, 0, 0);
-  const vendasMes = validas.filter((v) => new Date(v.criado_em) >= mesAtual);
-  const totalMes = vendasMes.reduce((s, v) => s + Number(v.valor_total), 0);
-  const lucroMes = vendasMes.reduce((s, v) => s + Number(v.lucro_total), 0);
-
-  // Gráfico: vendas por dia
-  const porDia = new Map<string, { data: string; total: number; lucro: number }>();
-  for (const v of validas) {
-    const key = new Date(v.criado_em).toISOString().slice(0, 10);
-    const cur = porDia.get(key) ?? { data: key.slice(5), total: 0, lucro: 0 };
-    cur.total += Number(v.valor_total);
-    cur.lucro += Number(v.lucro_total);
-    porDia.set(key, cur);
-  }
-  const chartDia = Array.from(porDia.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, v]) => v);
-
-  // Ranking vendedores
-  const porVendedor = new Map<
-    string,
-    { nome: string; total: number; lucro: number; qtd: number }
-  >();
-  for (const v of validas) {
-    const cur = porVendedor.get(v.vendedor_id) ?? {
-      nome: perfilMap[v.vendedor_id] ?? "—",
-      total: 0,
-      lucro: 0,
-      qtd: 0,
-    };
-    cur.total += Number(v.valor_total);
-    cur.lucro += Number(v.lucro_total);
-    cur.qtd += 1;
-    porVendedor.set(v.vendedor_id, cur);
-  }
-  const ranking = Array.from(porVendedor.values()).sort((a, b) => b.total - a.total);
-
-  // Por forma
-  const porForma = new Map<string, number>();
-  for (const v of validas)
-    porForma.set(v.forma_pagamento, (porForma.get(v.forma_pagamento) ?? 0) + Number(v.valor_total));
+  const resumo = financeiro.resumo;
+  const chartDia = financeiro.vendas_por_dia;
+  const ranking = financeiro.ranking_vendedores;
+  const porForma = new Map(financeiro.por_forma_pagamento.map((f) => [f.forma, f.total]));
 
   return (
     <div className="space-y-4">
@@ -157,6 +136,16 @@ function FinanceiroPage() {
         <h1 className="text-2xl font-bold">Financeiro</h1>
         <p className="text-sm text-muted-foreground">Painel completo — apenas administrador</p>
       </div>
+
+      {error && (
+        <Card className="border-destructive">
+          <CardContent className="p-4 text-sm text-destructive">
+            Não foi possível carregar o financeiro. Confirme se a migration
+            <span className="font-mono"> 20260704130000_fix_financeiro_dashboard_rpc.sql </span>
+            foi aplicada no Supabase. Erro: {String(error.message ?? error)}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -191,7 +180,7 @@ function FinanceiroPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                {perfis.map((p) => (
+                {financeiro.vendedores.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.nome}
                   </SelectItem>
@@ -203,17 +192,21 @@ function FinanceiroPage() {
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <MetricCard label="Vendas hoje" value={formatBRL(totalHoje)} icon={TrendingUp} />
-        <MetricCard label="Lucro hoje" value={formatBRL(lucroHoje)} icon={Wallet} />
-        <MetricCard label="Vendas do mês" value={formatBRL(totalMes)} icon={TrendingUp} />
-        <MetricCard label="Lucro do mês" value={formatBRL(lucroMes)} icon={Wallet} />
+        <MetricCard label="Vendas hoje" value={formatBRL(resumo.total_hoje)} icon={TrendingUp} />
+        <MetricCard label="Lucro hoje" value={formatBRL(resumo.lucro_hoje)} icon={Wallet} />
+        <MetricCard label="Vendas do mês" value={formatBRL(resumo.total_mes)} icon={TrendingUp} />
+        <MetricCard label="Lucro do mês" value={formatBRL(resumo.lucro_mes)} icon={Wallet} />
         <MetricCard
           label="Total em fiado"
-          value={formatBRL(totalFiado)}
+          value={formatBRL(resumo.total_fiado)}
           icon={CreditCard}
           tone="warning"
         />
-        <MetricCard label="Vendas no período" value={String(validas.length)} icon={Package} />
+        <MetricCard
+          label="Vendas no período"
+          value={String(resumo.vendas_periodo)}
+          icon={Package}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -222,10 +215,10 @@ function FinanceiroPage() {
             <CardTitle className="text-base">Resumo do período</CardTitle>
           </CardHeader>
           <CardContent className="text-sm space-y-2">
-            <Row label="Valor vendido" value={formatBRL(totalVendido)} />
-            <Row label="Custos" value={formatBRL(custoTotal)} />
-            <Row label="Lucro" value={formatBRL(lucroTotal)} strong />
-            <Row label="Vendas canceladas" value={String(canceladas.length)} />
+            <Row label="Valor vendido" value={formatBRL(resumo.total_vendido)} />
+            <Row label="Custos" value={formatBRL(resumo.custo_total)} />
+            <Row label="Lucro" value={formatBRL(resumo.lucro_total)} strong />
+            <Row label="Vendas canceladas" value={String(resumo.vendas_canceladas)} />
           </CardContent>
         </Card>
 
@@ -234,7 +227,7 @@ function FinanceiroPage() {
             <CardTitle className="text-base">Vendas e lucro por dia</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <ChartBox empty={!isLoading && chartDia.length === 0}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartDia}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -258,7 +251,7 @@ function FinanceiroPage() {
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </ChartBox>
           </CardContent>
         </Card>
       </div>
@@ -269,7 +262,7 @@ function FinanceiroPage() {
             <CardTitle className="text-base">Ranking de vendedores</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <ChartBox empty={!isLoading && ranking.length === 0}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ranking}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -279,10 +272,10 @@ function FinanceiroPage() {
                   <Bar dataKey="total" name="Total vendido" fill="var(--color-chart-1)" />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </ChartBox>
             <ul className="mt-3 divide-y text-sm">
               {ranking.map((r) => (
-                <li key={r.nome} className="flex justify-between py-1.5">
+                <li key={r.vendedor_id} className="flex justify-between py-1.5">
                   <span>
                     {r.nome} <span className="text-muted-foreground">({r.qtd})</span>
                   </span>
@@ -290,7 +283,9 @@ function FinanceiroPage() {
                 </li>
               ))}
               {ranking.length === 0 && (
-                <li className="text-muted-foreground py-2">Sem dados no período.</li>
+                <li className="text-muted-foreground py-2">
+                  {isLoading ? "Carregando..." : "Sem dados no período."}
+                </li>
               )}
             </ul>
           </CardContent>
@@ -312,6 +307,64 @@ function FinanceiroPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function normalizarFinanceiro(data: unknown): FinanceiroDados {
+  if (!data || typeof data !== "object") return financeiroVazio;
+
+  const d = data as Partial<FinanceiroDados>;
+  const resumo = { ...resumoVazio, ...(d.resumo ?? {}) };
+
+  return {
+    resumo: {
+      total_vendido: Number(resumo.total_vendido ?? 0),
+      custo_total: Number(resumo.custo_total ?? 0),
+      lucro_total: Number(resumo.lucro_total ?? 0),
+      total_fiado: Number(resumo.total_fiado ?? 0),
+      vendas_periodo: Number(resumo.vendas_periodo ?? 0),
+      vendas_canceladas: Number(resumo.vendas_canceladas ?? 0),
+      total_hoje: Number(resumo.total_hoje ?? 0),
+      lucro_hoje: Number(resumo.lucro_hoje ?? 0),
+      total_mes: Number(resumo.total_mes ?? 0),
+      lucro_mes: Number(resumo.lucro_mes ?? 0),
+    },
+    vendas_por_dia: (d.vendas_por_dia ?? []).map((item) => ({
+      data: String(item.data),
+      total: Number(item.total ?? 0),
+      lucro: Number(item.lucro ?? 0),
+    })),
+    ranking_vendedores: (d.ranking_vendedores ?? []).map((item) => ({
+      vendedor_id: String(item.vendedor_id),
+      nome: String(item.nome ?? "—"),
+      total: Number(item.total ?? 0),
+      lucro: Number(item.lucro ?? 0),
+      qtd: Number(item.qtd ?? 0),
+    })),
+    por_forma_pagamento: (d.por_forma_pagamento ?? financeiroVazio.por_forma_pagamento).map(
+      (item) => ({
+        forma: item.forma,
+        total: Number(item.total ?? 0),
+      }),
+    ),
+    vendedores: (d.vendedores ?? []).map((item) => ({
+      id: String(item.id),
+      nome: String(item.nome ?? "—"),
+    })),
+  };
+}
+
+function ChartBox({ children, empty }: { children: React.ReactNode; empty: boolean }) {
+  return (
+    <div className="h-64">
+      {empty ? (
+        <div className="h-full rounded-md border border-dashed flex items-center justify-center text-sm text-muted-foreground text-center px-4">
+          Sem dados no período selecionado.
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }

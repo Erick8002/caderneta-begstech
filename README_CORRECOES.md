@@ -59,3 +59,20 @@ O app agora usa aprovação por administrador para vendedores. Porém, se o Supa
 npm run build: OK
 npm run lint: OK, com 6 warnings antigos de react-refresh/only-export-components em componentes shadcn/ui
 ```
+
+## Correção adicional do Financeiro
+
+Arquivo novo:
+
+- `supabase/migrations/20260704130000_fix_financeiro_dashboard_rpc.sql`
+
+Alterações:
+
+- A página `/financeiro` agora busca os dados por uma RPC admin-only (`financeiro_admin_dados`) em vez de consultar várias tabelas diretamente pelo client.
+- Isso evita que RLS ou joins do client deixem a tela vazia.
+- A tela mostra mensagem de erro se a RPC ainda não tiver sido aplicada no Supabase.
+- Gráficos exibem estado vazio quando não houver vendas no período selecionado.
+
+Depois de subir os arquivos, aplique a migration nova no SQL Editor do Supabase:
+
+`supabase/migrations/20260704130000_fix_financeiro_dashboard_rpc.sql`

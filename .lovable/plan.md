@@ -18,6 +18,7 @@ Ativar Cloud e criar schema:
 RLS: leitura para authenticated, mutações sensíveis (delete, alterar limite, cancelar venda) só para admin via `has_role()`.
 
 Regras de negócio implementadas em **server functions** (`createServerFn`) com `requireSupabaseAuth`:
+
 - `criarVenda` — valida estoque, valida fiado (cliente cadastrado, ≥3 compras, dentro do limite), cria venda + itens, dá baixa no estoque, atualiza saldo devedor
 - `cancelarVenda` (admin) — devolve estoque, zera lucros, devolve saldo devedor
 - `registrarPagamentoFiado` (admin) — parcial ou total

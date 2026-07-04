@@ -31,7 +31,10 @@ export const Route = createFileRoute("/_authenticated/financeiro")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) return;
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user.id);
     const isAdmin = (roles ?? []).some((r) => r.role === "admin");
     if (!isAdmin) throw redirect({ to: "/dashboard" });
   },
@@ -56,7 +59,9 @@ function FinanceiroPage() {
       ate.setHours(23, 59, 59, 999);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, criado_em, valor_total, custo_total, lucro_total, forma_pagamento, status, vendedor_id, cliente_id")
+        .select(
+          "id, criado_em, valor_total, custo_total, lucro_total, forma_pagamento, status, vendedor_id, cliente_id",
+        )
         .gte("criado_em", de.toISOString())
         .lte("criado_em", ate.toISOString());
       if (error) throw error;
@@ -123,7 +128,10 @@ function FinanceiroPage() {
     .map(([, v]) => v);
 
   // Ranking vendedores
-  const porVendedor = new Map<string, { nome: string; total: number; lucro: number; qtd: number }>();
+  const porVendedor = new Map<
+    string,
+    { nome: string; total: number; lucro: number; qtd: number }
+  >();
   for (const v of validas) {
     const cur = porVendedor.get(v.vendedor_id) ?? {
       nome: perfilMap[v.vendedor_id] ?? "—",
@@ -140,7 +148,8 @@ function FinanceiroPage() {
 
   // Por forma
   const porForma = new Map<string, number>();
-  for (const v of validas) porForma.set(v.forma_pagamento, (porForma.get(v.forma_pagamento) ?? 0) + Number(v.valor_total));
+  for (const v of validas)
+    porForma.set(v.forma_pagamento, (porForma.get(v.forma_pagamento) ?? 0) + Number(v.valor_total));
 
   return (
     <div className="space-y-4">
@@ -198,7 +207,12 @@ function FinanceiroPage() {
         <MetricCard label="Lucro hoje" value={formatBRL(lucroHoje)} icon={Wallet} />
         <MetricCard label="Vendas do mês" value={formatBRL(totalMes)} icon={TrendingUp} />
         <MetricCard label="Lucro do mês" value={formatBRL(lucroMes)} icon={Wallet} />
-        <MetricCard label="Total em fiado" value={formatBRL(totalFiado)} icon={CreditCard} tone="warning" />
+        <MetricCard
+          label="Total em fiado"
+          value={formatBRL(totalFiado)}
+          icon={CreditCard}
+          tone="warning"
+        />
         <MetricCard label="Vendas no período" value={String(validas.length)} icon={Package} />
       </div>
 
@@ -228,8 +242,20 @@ function FinanceiroPage() {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v: number) => formatBRL(v)} />
                   <Legend />
-                  <Line type="monotone" dataKey="total" name="Vendas" stroke="var(--color-chart-1)" strokeWidth={2} />
-                  <Line type="monotone" dataKey="lucro" name="Lucro" stroke="var(--color-chart-2)" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    name="Vendas"
+                    stroke="var(--color-chart-1)"
+                    strokeWidth={2}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="lucro"
+                    name="Lucro"
+                    stroke="var(--color-chart-2)"
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -263,7 +289,9 @@ function FinanceiroPage() {
                   <span className="font-medium">{formatBRL(r.total)}</span>
                 </li>
               ))}
-              {ranking.length === 0 && <li className="text-muted-foreground py-2">Sem dados no período.</li>}
+              {ranking.length === 0 && (
+                <li className="text-muted-foreground py-2">Sem dados no período.</li>
+              )}
             </ul>
           </CardContent>
         </Card>
@@ -305,7 +333,9 @@ function MetricCard({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase text-muted-foreground">{label}</p>
-            <p className={`text-lg font-bold mt-1 ${tone === "warning" ? "text-destructive" : ""}`}>{value}</p>
+            <p className={`text-lg font-bold mt-1 ${tone === "warning" ? "text-destructive" : ""}`}>
+              {value}
+            </p>
           </div>
           <Icon className="h-5 w-5 text-primary" />
         </div>

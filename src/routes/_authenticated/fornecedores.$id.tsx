@@ -36,7 +36,10 @@ function FornecedorDetalhes() {
 
   return (
     <div className="space-y-4">
-      <Link to="/fornecedores" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
+      <Link
+        to="/fornecedores"
+        className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"
+      >
         <ArrowLeft className="h-3 w-3" /> Fornecedores
       </Link>
       <div>
@@ -50,7 +53,10 @@ function FornecedorDetalhes() {
         <Info label="CNPJ" value={f.cnpj ?? "—"} />
         <Info label="Endereço" value={f.endereco ?? "—"} />
         <Info label="Produtos" value={String(data.produtos.length)} />
-        <Info label="Última compra" value={ultimaCompra ? formatDate(new Date(ultimaCompra)) : "—"} />
+        <Info
+          label="Última compra"
+          value={ultimaCompra ? formatDate(new Date(ultimaCompra)) : "—"}
+        />
       </div>
 
       {f.observacoes && (
@@ -74,7 +80,11 @@ function FornecedorDetalhes() {
               {data.produtos.map((p) => (
                 <li key={p.id} className="flex items-center justify-between p-3">
                   <div>
-                    <Link to="/estoque/$id" params={{ id: p.id }} className="font-medium hover:underline">
+                    <Link
+                      to="/estoque/$id"
+                      params={{ id: p.id }}
+                      className="font-medium hover:underline"
+                    >
                       {p.nome}
                     </Link>
                     <div className="text-xs text-muted-foreground">SKU {p.sku ?? "-"}</div>

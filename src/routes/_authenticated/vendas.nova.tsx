@@ -66,12 +66,17 @@ function NovaVenda() {
 
   const clienteSel = clientes.find((c) => c.id === clienteId);
   const total = itens.reduce((s, i) => s + i.quantidade * i.valor_unitario, 0);
-  const disponivel = clienteSel ? Number(clienteSel.limite_fiado) - Number(clienteSel.saldo_devedor) : 0;
+  const disponivel = clienteSel
+    ? Number(clienteSel.limite_fiado) - Number(clienteSel.saldo_devedor)
+    : 0;
 
   const podeFiado = useMemo(() => {
     if (!clienteSel) return { ok: false, msg: "Selecione um cliente cadastrado." };
-    if (clienteSel.qtd_compras < 2)
-      return { ok: false, msg: `Cliente só pode comprar fiado a partir da 3ª compra (atual: ${clienteSel.qtd_compras}).` };
+    if (clienteSel.qtd_compras < 3)
+      return {
+        ok: false,
+        msg: `Cliente só pode comprar fiado a partir da 3ª compra (atual: ${clienteSel.qtd_compras}).`,
+      };
     if (total > disponivel)
       return { ok: false, msg: `Limite insuficiente. Disponível: ${formatBRL(disponivel)}` };
     return { ok: true, msg: "" };
@@ -87,14 +92,22 @@ function NovaVenda() {
     if (!p) return;
     setItens((prev) => [
       ...prev,
-      { produto_id: p.id, nome: p.nome, quantidade: 1, valor_unitario: Number(p.valor_venda), estoque: p.quantidade },
+      {
+        produto_id: p.id,
+        nome: p.nome,
+        quantidade: 1,
+        valor_unitario: Number(p.valor_venda),
+        estoque: p.quantidade,
+      },
     ]);
     setProdutoSel("");
   }
 
   function atualizarQtd(id: string, qtd: number) {
     setItens((prev) =>
-      prev.map((i) => (i.produto_id === id ? { ...i, quantidade: Math.max(1, Math.min(qtd, i.estoque)) } : i)),
+      prev.map((i) =>
+        i.produto_id === id ? { ...i, quantidade: Math.max(1, Math.min(qtd, i.estoque)) } : i,
+      ),
     );
   }
   function remover(id: string) {
@@ -104,7 +117,7 @@ function NovaVenda() {
   const criar = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc("criar_venda", {
-        p_cliente_id: (clienteId || null) as string,
+        p_cliente_id: clienteId || null,
         p_forma_pagamento: forma,
         p_itens: itens.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade })),
       });
@@ -159,14 +172,18 @@ function NovaVenda() {
             </div>
 
             {itens.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Nenhum produto adicionado.</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Nenhum produto adicionado.
+              </p>
             ) : (
               <ul className="divide-y">
                 {itens.map((i) => (
                   <li key={i.produto_id} className="py-3 grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-5">
                       <div className="font-medium">{i.nome}</div>
-                      <div className="text-xs text-muted-foreground">{formatBRL(i.valor_unitario)} × un</div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatBRL(i.valor_unitario)} × un
+                      </div>
                     </div>
                     <div className="col-span-3">
                       <Input
@@ -198,7 +215,9 @@ function NovaVenda() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Cliente {forma === "fiado" && <span className="text-destructive">*</span>}</Label>
+              <Label>
+                Cliente {forma === "fiado" && <span className="text-destructive">*</span>}
+              </Label>
               <Select value={clienteId} onValueChange={setClienteId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sem cadastro" />

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -12,11 +13,15 @@ import {
   Menu,
   X,
   Store,
+  UserCheck,
+  Bell,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -34,26 +39,70 @@ const NAV: NavItem[] = [
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
   { to: "/fiado", label: "Fiado", icon: CreditCard },
   { to: "/financeiro", label: "Financeiro", icon: Wallet, adminOnly: true },
+  { to: "/admin/aprovacoes", label: "Aprovações", icon: UserCheck, adminOnly: true },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { profile, role, isAdmin, loading } = useAuth();
+  const { profile, role, isAdmin, isApproved, approvalStatus, loading } = useAuth();
   const router = useRouter();
   const location = useLocation();
   const [open, setOpen] = useState(false);
 
   const items = NAV.filter((n) => !n.adminOnly || isAdmin);
 
+  const { data: pendentes = 0 } = useQuery({
+    queryKey: ["aprovacoes-pendentes-count", isAdmin],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("solicitacoes_vendedor")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pendente");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    refetchInterval: 30_000,
+  });
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.navigate({ to: "/auth", replace: true });
+  }
+
+  if (!loading && !isApproved) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-lg">
+          <CardContent className="p-6 text-center space-y-4">
+            <div className="mx-auto h-12 w-12 rounded-full bg-warning/20 flex items-center justify-center">
+              <Clock className="h-6 w-6 text-warning-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Acesso aguardando aprovação</h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                Sua conta foi criada, mas um administrador precisa aprovar seu acesso como vendedor
+                antes de usar o sistema.
+              </p>
+              {approvalStatus === "rejeitado" && (
+                <p className="text-sm text-destructive mt-3">
+                  Seu acesso foi rejeitado. Fale com o administrador da loja.
+                </p>
+              )}
+            </div>
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" /> Sair
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       {/* Sidebar desktop */}
       <aside className="hidden md:flex md:w-64 flex-col bg-sidebar text-sidebar-foreground">
-        <SidebarInner items={items} pathname={location.pathname} />
+        <SidebarInner items={items} pathname={location.pathname} pendentes={pendentes} />
       </aside>
 
       {/* Drawer mobile */}
@@ -68,7 +117,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <X className="h-5 w-5" />
             </button>
-            <SidebarInner items={items} pathname={location.pathname} onNavigate={() => setOpen(false)} />
+            <SidebarInner
+              items={items}
+              pathname={location.pathname}
+              pendentes={pendentes}
+              onNavigate={() => setOpen(false)}
+            />
           </aside>
         </div>
       )}
@@ -88,6 +142,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Store className="h-5 w-5 text-primary" />
               <span className="font-semibold">BEGSTech</span>
             </div>
+            {isAdmin && pendentes > 0 && (
+              <Link to="/admin/aprovacoes" className="hidden sm:inline-flex">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Bell className="h-4 w-4" /> {pendentes} aprovação{pendentes > 1 ? "ões" : ""}
+                </Button>
+              </Link>
+            )}
           </div>
           <div className="flex items-center gap-3">
             {!loading && profile && (
@@ -115,10 +176,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 function SidebarInner({
   items,
   pathname,
+  pendentes,
   onNavigate,
 }: {
   items: NavItem[];
   pathname: string;
+  pendentes?: number;
   onNavigate?: () => void;
 }) {
   return (
@@ -139,6 +202,7 @@ function SidebarInner({
               ? pathname === "/" || pathname === "/dashboard"
               : pathname.startsWith(item.to);
           const Icon = item.icon;
+          const showPending = item.to === "/admin/aprovacoes" && !!pendentes;
           return (
             <Link
               key={item.to}
@@ -152,7 +216,8 @@ function SidebarInner({
               )}
             >
               <Icon className="h-4 w-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {showPending && <Badge variant="destructive">{pendentes}</Badge>}
             </Link>
           );
         })}

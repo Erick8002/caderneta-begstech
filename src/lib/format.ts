@@ -1,5 +1,5 @@
 export function formatBRL(value: number | string | null | undefined): string {
-  const n = typeof value === "string" ? Number(value) : value ?? 0;
+  const n = typeof value === "string" ? Number(value) : (value ?? 0);
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
 }
 

@@ -74,14 +74,18 @@ function ClienteDetalhes() {
 
   return (
     <div className="space-y-4">
-      <Link to="/clientes" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
+      <Link
+        to="/clientes"
+        className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"
+      >
         <ArrowLeft className="h-3 w-3" /> Clientes
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{c.nome}</h1>
           <p className="text-sm text-muted-foreground">
-            {c.telefone ?? "sem telefone"} · CPF: {c.cpf ?? "não informado"} · Desde {formatDate(c.criado_em)}
+            {c.telefone ?? "sem telefone"} · CPF: {c.cpf ?? "não informado"} · Desde{" "}
+            {formatDate(c.criado_em)}
           </p>
         </div>
       </div>
@@ -89,7 +93,11 @@ function ClienteDetalhes() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <MiniCard label="Compras" value={String(c.qtd_compras)} />
         <MiniCard label="Limite fiado" value={formatBRL(c.limite_fiado)} />
-        <MiniCard label="Saldo devedor" value={formatBRL(c.saldo_devedor)} tone={Number(c.saldo_devedor) > 0 ? "warning" : undefined} />
+        <MiniCard
+          label="Saldo devedor"
+          value={formatBRL(c.saldo_devedor)}
+          tone={Number(c.saldo_devedor) > 0 ? "warning" : undefined}
+        />
         <MiniCard label="Fiado disponível" value={formatBRL(disponivel)} />
       </div>
 
@@ -117,7 +125,14 @@ function ClienteDetalhes() {
               >
                 <div className="space-y-2">
                   <Label>Valor (R$)</Label>
-                  <Input name="limite" type="number" step="0.01" min="0" defaultValue={Number(c.limite_fiado)} required />
+                  <Input
+                    name="limite"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={Number(c.limite_fiado)}
+                    required
+                  />
                 </div>
                 <DialogFooter>
                   <Button type="submit" disabled={alterarLimite.isPending}>
@@ -145,10 +160,16 @@ function ClienteDetalhes() {
                 {data.vendas.map((v) => (
                   <li key={v.id} className="flex items-center justify-between p-3">
                     <div>
-                      <Link to="/vendas/$id" params={{ id: v.id }} className="text-sm font-medium hover:underline">
+                      <Link
+                        to="/vendas/$id"
+                        params={{ id: v.id }}
+                        className="text-sm font-medium hover:underline"
+                      >
                         {formatDateTime(v.criado_em)}
                       </Link>
-                      <div className="text-xs text-muted-foreground uppercase">{v.forma_pagamento}</div>
+                      <div className="text-xs text-muted-foreground uppercase">
+                        {v.forma_pagamento}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">{formatBRL(v.valor_total)}</div>
@@ -174,7 +195,9 @@ function ClienteDetalhes() {
                   <li key={p.id} className="flex items-center justify-between p-3 text-sm">
                     <div>
                       <div>{formatDateTime(p.data_pagamento)}</div>
-                      {p.observacao && <div className="text-xs text-muted-foreground">{p.observacao}</div>}
+                      {p.observacao && (
+                        <div className="text-xs text-muted-foreground">{p.observacao}</div>
+                      )}
                     </div>
                     <div className="font-medium text-success">{formatBRL(p.valor_pago)}</div>
                   </li>
@@ -193,7 +216,9 @@ function MiniCard({ label, value, tone }: { label: string; value: string; tone?:
     <Card>
       <CardContent className="p-4">
         <p className="text-xs uppercase text-muted-foreground">{label}</p>
-        <p className={`text-lg font-bold mt-1 ${tone === "warning" ? "text-destructive" : ""}`}>{value}</p>
+        <p className={`text-lg font-bold mt-1 ${tone === "warning" ? "text-destructive" : ""}`}>
+          {value}
+        </p>
       </CardContent>
     </Card>
   );
@@ -201,6 +226,7 @@ function MiniCard({ label, value, tone }: { label: string; value: string; tone?:
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "paga") return <Badge className="bg-success text-success-foreground">Paga</Badge>;
-  if (status === "fiada") return <Badge className="bg-warning text-warning-foreground">Fiada</Badge>;
+  if (status === "fiada")
+    return <Badge className="bg-warning text-warning-foreground">Fiada</Badge>;
   return <Badge variant="destructive">Cancelada</Badge>;
 }

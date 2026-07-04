@@ -86,7 +86,9 @@ function FornecedoresPage() {
   });
 
   const filtrados = lista.filter((f) =>
-    (f.nome + " " + (f.cnpj ?? "") + " " + (f.telefone ?? "")).toLowerCase().includes(busca.toLowerCase()),
+    (f.nome + " " + (f.cnpj ?? "") + " " + (f.telefone ?? ""))
+      .toLowerCase()
+      .includes(busca.toLowerCase()),
   );
 
   return (
@@ -161,7 +163,12 @@ function FornecedoresPage() {
         <CardHeader className="pb-3">
           <div className="relative max-w-sm">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar fornecedor…" className="pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            <Input
+              placeholder="Buscar fornecedor…"
+              className="pl-9"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
@@ -179,7 +186,11 @@ function FornecedoresPage() {
               {filtrados.map((f) => (
                 <TableRow key={f.id}>
                   <TableCell>
-                    <Link to="/fornecedores/$id" params={{ id: f.id }} className="hover:underline font-medium">
+                    <Link
+                      to="/fornecedores/$id"
+                      params={{ id: f.id }}
+                      className="hover:underline font-medium"
+                    >
                       {f.nome}
                     </Link>
                   </TableCell>

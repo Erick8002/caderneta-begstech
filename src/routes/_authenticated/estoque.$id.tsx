@@ -1,10 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { formatBRL, formatDate, formatDateTime } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ArrowLeft, AlertTriangle, PackagePlus } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/estoque/$id")({
   component: ProdutoDetalhes,
@@ -12,6 +25,8 @@ export const Route = createFileRoute("/_authenticated/estoque/$id")({
 
 function ProdutoDetalhes() {
   const { id } = Route.useParams();
+  const { isAdmin } = useAuth();
+  const qc = useQueryClient();
 
   const { data } = useQuery({
     queryKey: ["produto", id],
@@ -30,6 +45,29 @@ function ProdutoDetalhes() {
     },
   });
 
+  const receberEstoque = useMutation({
+    mutationFn: async (payload: {
+      quantidade: number;
+      valor_custo: number | null;
+      atualizar_custo: boolean;
+    }) => {
+      const { error } = await supabase.rpc("receber_estoque_produto", {
+        p_produto_id: id,
+        p_quantidade: payload.quantidade,
+        p_valor_custo: payload.valor_custo,
+        p_atualizar_custo: payload.atualizar_custo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Estoque recebido");
+      qc.invalidateQueries({ queryKey: ["produto", id] });
+      qc.invalidateQueries({ queryKey: ["produtos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (!data?.produto) return <div>Carregando…</div>;
   const p = data.produto;
   const validas = data.itens.filter((i) => i.vendas?.status !== "cancelada");
@@ -40,15 +78,86 @@ function ProdutoDetalhes() {
 
   return (
     <div className="space-y-4">
-      <Link to="/estoque" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
+      <Link
+        to="/estoque"
+        className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"
+      >
         <ArrowLeft className="h-3 w-3" /> Estoque
       </Link>
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">{p.nome}</h1>
-        {baixo && (
-          <Badge variant="destructive" className="gap-1">
-            <AlertTriangle className="h-3 w-3" /> Estoque baixo
-          </Badge>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">{p.nome}</h1>
+          {baixo && (
+            <Badge variant="destructive" className="gap-1">
+              <AlertTriangle className="h-3 w-3" /> Estoque baixo
+            </Badge>
+          )}
+        </div>
+        {isAdmin && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <PackagePlus className="h-4 w-4 mr-2" /> Receber estoque
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Receber estoque</DialogTitle>
+              </DialogHeader>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  const quantidade = Number(f.get("quantidade"));
+                  const custoRaw = String(f.get("valor_custo") ?? "").trim();
+                  const valorCusto = custoRaw === "" ? null : Number(custoRaw);
+                  const atualizarCusto = f.get("atualizar_custo") === "on";
+
+                  if (Number.isNaN(quantidade) || quantidade <= 0)
+                    return toast.error("Quantidade inválida");
+                  if (valorCusto !== null && Number.isNaN(valorCusto))
+                    return toast.error("Valor de custo inválido");
+
+                  receberEstoque.mutate({
+                    quantidade,
+                    valor_custo: valorCusto,
+                    atualizar_custo: atualizarCusto,
+                  });
+                }}
+                className="space-y-3"
+              >
+                <p className="text-sm text-muted-foreground">
+                  Produto: <span className="font-medium text-foreground">{p.nome}</span> · estoque
+                  atual: {p.quantidade}
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Quantidade recebida</Label>
+                    <Input name="quantidade" type="number" min={1} defaultValue={1} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Novo custo unitário (R$)</Label>
+                    <Input
+                      name="valor_custo"
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      placeholder="Opcional"
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input name="atualizar_custo" type="checkbox" className="h-4 w-4" />
+                  Atualizar o valor de custo do produto
+                </label>
+                <DialogFooter>
+                  <Button type="submit" disabled={receberEstoque.isPending}>
+                    Receber
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
       <p className="text-sm text-muted-foreground">
@@ -63,7 +172,11 @@ function ProdutoDetalhes() {
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Mini label="Estoque atual" value={String(p.quantidade)} tone={baixo ? "warning" : undefined} />
+        <Mini
+          label="Estoque atual"
+          value={String(p.quantidade)}
+          tone={baixo ? "warning" : undefined}
+        />
         <Mini label="Estoque mínimo" value={String(p.estoque_minimo)} />
         <Mini label="Valor de custo" value={formatBRL(p.valor_custo)} />
         <Mini label="Valor de venda" value={formatBRL(p.valor_venda)} />
@@ -88,7 +201,11 @@ function ProdutoDetalhes() {
               {data.itens.map((i) => (
                 <li key={i.id} className="flex items-center justify-between p-3">
                   <div>
-                    <Link to="/vendas/$id" params={{ id: i.venda_id }} className="text-sm hover:underline">
+                    <Link
+                      to="/vendas/$id"
+                      params={{ id: i.venda_id }}
+                      className="text-sm hover:underline"
+                    >
                       {i.vendas ? formatDateTime(i.vendas.criado_em) : "-"}
                     </Link>
                     {i.vendas?.status === "cancelada" && (
@@ -108,7 +225,9 @@ function ProdutoDetalhes() {
         </CardContent>
       </Card>
 
-      <p className="text-xs text-muted-foreground">Última compra: {p.ultima_compra ? formatDate(p.ultima_compra) : "—"}</p>
+      <p className="text-xs text-muted-foreground">
+        Última compra: {p.ultima_compra ? formatDate(p.ultima_compra) : "—"}
+      </p>
     </div>
   );
 }
@@ -118,7 +237,9 @@ function Mini({ label, value, tone }: { label: string; value: string; tone?: "wa
     <Card>
       <CardContent className="p-4">
         <p className="text-xs uppercase text-muted-foreground">{label}</p>
-        <p className={`text-lg font-bold mt-1 ${tone === "warning" ? "text-destructive" : ""}`}>{value}</p>
+        <p className={`text-lg font-bold mt-1 ${tone === "warning" ? "text-destructive" : ""}`}>
+          {value}
+        </p>
       </CardContent>
     </Card>
   );

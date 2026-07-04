@@ -48,13 +48,14 @@ function AuthPage() {
       email: String(f.get("email")),
       password: String(f.get("password")),
       options: {
-        emailRedirectTo: window.location.origin,
         data: { nome: String(f.get("nome")) },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Conta criada! Você já pode entrar.");
+    toast.success(
+      "Conta criada! Se não for o primeiro usuário, aguarde o administrador aprovar seu acesso.",
+    );
     setTab("login");
   }
 
@@ -66,14 +67,17 @@ function AuthPage() {
             <Store className="h-7 w-7" />
           </div>
           <h1 className="mt-4 text-2xl font-bold">Caderneta Digital</h1>
-          <p className="text-sm text-muted-foreground">BEGSTech — controle sua loja com facilidade</p>
+          <p className="text-sm text-muted-foreground">
+            BEGSTech — controle sua loja com facilidade
+          </p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Acesse sua loja</CardTitle>
             <CardDescription>
-              O primeiro usuário cadastrado é o Administrador. Os demais entram como Vendedores.
+              O primeiro usuário cadastrado é o Administrador. Os demais solicitam acesso como
+              Vendedores.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -90,7 +94,13 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="l-pass">Senha</Label>
-                    <Input id="l-pass" name="password" type="password" required autoComplete="current-password" />
+                    <Input
+                      id="l-pass"
+                      name="password"
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                    />
                   </div>
                   <Button type="submit" className="w-full" size="lg" disabled={loading}>
                     Entrar

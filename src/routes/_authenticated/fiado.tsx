@@ -15,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -25,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, DollarSign } from "lucide-react";
+import { CreditCard, DollarSign, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/fiado")({
@@ -36,6 +35,7 @@ function FiadoPage() {
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const [openCliente, setOpenCliente] = useState<string | null>(null);
+  const [openLimiteCliente, setOpenLimiteCliente] = useState<string | null>(null);
 
   const { data: devedores = [] } = useQuery({
     queryKey: ["fiado-devedores"],
@@ -55,7 +55,7 @@ function FiadoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pagamentos_fiado")
-        .select("id, valor_pago, data_pagamento, observacao, clientes(nome)")
+        .select("id, valor_pago, data_pagamento, observacao, venda_id, clientes(nome)")
         .order("data_pagamento", { ascending: false })
         .limit(30);
       if (error) throw error;
@@ -68,7 +68,8 @@ function FiadoPage() {
       const { error } = await supabase.rpc("registrar_pagamento_fiado", {
         p_cliente_id: p.cliente_id,
         p_valor: p.valor,
-        p_observacao: p.obs || (null as unknown as string),
+        p_observacao: p.obs || null,
+        p_venda_id: null,
       });
       if (error) throw error;
     },
@@ -80,15 +81,33 @@ function FiadoPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const alterarLimite = useMutation({
+    mutationFn: async (p: { cliente_id: string; limite: number }) => {
+      const { error } = await supabase.rpc("alterar_limite_fiado", {
+        p_cliente_id: p.cliente_id,
+        p_novo_limite: p.limite,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Limite de fiado atualizado");
+      qc.invalidateQueries();
+      setOpenLimiteCliente(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const totalAberto = devedores.reduce((s, c) => s + Number(c.saldo_devedor), 0);
   const cliAtivo = devedores.find((c) => c.id === openCliente);
+  const cliLimite = devedores.find((c) => c.id === openLimiteCliente);
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Fiado</h1>
         <p className="text-sm text-muted-foreground">
-          Limite inicial R$ 100,00 · Liberado a partir da 3ª compra
+          Limite inicial R$ 100,00 · Liberado a partir da 3ª compra · Somente administrador altera
+          limites e registra pagamentos
         </p>
       </div>
 
@@ -120,33 +139,55 @@ function FiadoPage() {
                 <TableHead>Cliente</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead>Limite</TableHead>
+                <TableHead>Disponível</TableHead>
                 <TableHead>Deve</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {devedores.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>
-                    <Link to="/clientes/$id" params={{ id: c.id }} className="font-medium hover:underline">
-                      {c.nome}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{c.telefone ?? "-"}</TableCell>
-                  <TableCell>{formatBRL(c.limite_fiado)}</TableCell>
-                  <TableCell className="font-semibold text-destructive">{formatBRL(c.saldo_devedor)}</TableCell>
-                  <TableCell className="text-right">
-                    {isAdmin && (
-                      <Button size="sm" variant="outline" onClick={() => setOpenCliente(c.id)}>
-                        <DollarSign className="h-4 w-4 mr-1" /> Registrar pagamento
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {devedores.map((c) => {
+                const disponivel = Number(c.limite_fiado) - Number(c.saldo_devedor);
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <Link
+                        to="/clientes/$id"
+                        params={{ id: c.id }}
+                        className="font-medium hover:underline"
+                      >
+                        {c.nome}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{c.telefone ?? "-"}</TableCell>
+                    <TableCell>{formatBRL(c.limite_fiado)}</TableCell>
+                    <TableCell className={disponivel < 0 ? "text-destructive" : ""}>
+                      {formatBRL(disponivel)}
+                    </TableCell>
+                    <TableCell className="font-semibold text-destructive">
+                      {formatBRL(c.saldo_devedor)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isAdmin && (
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setOpenLimiteCliente(c.id)}
+                          >
+                            <Pencil className="h-4 w-4 mr-1" /> Alterar limite
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setOpenCliente(c.id)}>
+                            <DollarSign className="h-4 w-4 mr-1" /> Registrar pagamento
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {devedores.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     Nenhum cliente devendo. 🎉
                   </TableCell>
                 </TableRow>
@@ -169,7 +210,18 @@ function FiadoPage() {
                 <li key={p.id} className="p-3 flex items-center justify-between">
                   <div>
                     <div className="font-medium">{p.clientes?.nome ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground">{formatDateTime(p.data_pagamento)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatDateTime(p.data_pagamento)}
+                      {p.venda_id && (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <Link to="/vendas/$id" params={{ id: p.venda_id }} className="underline">
+                            Venda #{p.venda_id.slice(0, 8)}
+                          </Link>
+                        </>
+                      )}
+                    </div>
                     {p.observacao && <div className="text-xs mt-0.5">{p.observacao}</div>}
                   </div>
                   <div className="font-medium text-success">{formatBRL(p.valor_pago)}</div>
@@ -201,11 +253,14 @@ function FiadoPage() {
               className="space-y-3"
             >
               <p className="text-sm">
-                <span className="text-muted-foreground">Cliente:</span> <span className="font-medium">{cliAtivo.nome}</span>
+                <span className="text-muted-foreground">Cliente:</span>{" "}
+                <span className="font-medium">{cliAtivo.nome}</span>
               </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Deve:</span>{" "}
-                <span className="font-semibold text-destructive">{formatBRL(cliAtivo.saldo_devedor)}</span>
+                <span className="font-semibold text-destructive">
+                  {formatBRL(cliAtivo.saldo_devedor)}
+                </span>
               </p>
               <div className="space-y-2">
                 <Label>Valor pago (R$)</Label>
@@ -226,6 +281,51 @@ function FiadoPage() {
               <DialogFooter>
                 <Button type="submit" disabled={registrar.isPending}>
                   Registrar
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!openLimiteCliente} onOpenChange={(v) => !v && setOpenLimiteCliente(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar limite de fiado</DialogTitle>
+          </DialogHeader>
+          {cliLimite && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                const limite = Number(f.get("limite"));
+                if (Number.isNaN(limite) || limite < 0) return toast.error("Limite inválido");
+                alterarLimite.mutate({ cliente_id: cliLimite.id, limite });
+              }}
+              className="space-y-3"
+            >
+              <p className="text-sm">
+                <span className="text-muted-foreground">Cliente:</span>{" "}
+                <span className="font-medium">{cliLimite.nome}</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Você pode aumentar ou diminuir o limite. O saldo devedor atual é{" "}
+                {formatBRL(cliLimite.saldo_devedor)}.
+              </p>
+              <div className="space-y-2">
+                <Label>Novo limite (R$)</Label>
+                <Input
+                  name="limite"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={Number(cliLimite.limite_fiado)}
+                  required
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={alterarLimite.isPending}>
+                  Salvar limite
                 </Button>
               </DialogFooter>
             </form>

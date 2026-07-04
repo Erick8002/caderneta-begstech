@@ -31,11 +31,7 @@ function VendaDetalhes() {
     queryKey: ["venda", id],
     queryFn: async () => {
       const [v, itens] = await Promise.all([
-        supabase
-          .from("vendas")
-          .select("*, clientes(id, nome)")
-          .eq("id", id)
-          .maybeSingle(),
+        supabase.from("vendas").select("*, clientes(id, nome)").eq("id", id).maybeSingle(),
         supabase
           .from("itens_venda")
           .select("id, quantidade, valor_unitario, subtotal, produto_id, produtos(nome)")
@@ -43,7 +39,13 @@ function VendaDetalhes() {
       ]);
       if (v.error) throw v.error;
       const vendedor = v.data
-        ? (await supabase.from("profiles").select("nome").eq("id", v.data.vendedor_id).maybeSingle()).data
+        ? (
+            await supabase
+              .from("profiles")
+              .select("nome")
+              .eq("id", v.data.vendedor_id)
+              .maybeSingle()
+          ).data
         : null;
       return { venda: v.data, itens: itens.data ?? [], vendedor };
     },
@@ -63,10 +65,20 @@ function VendaDetalhes() {
 
   if (!data?.venda) return <div>Carregando…</div>;
   const v = data.venda;
+  const totalItens = data.itens.reduce((acc, item) => {
+    const quantidade = Number(item.quantidade ?? 0);
+    const valorUnitario = Number(item.valor_unitario ?? 0);
+    const subtotal = Number(item.subtotal ?? quantidade * valorUnitario);
+    return acc + subtotal;
+  }, 0);
+  const totalVenda = Number(v.valor_total ?? 0) > 0 ? Number(v.valor_total) : totalItens;
 
   return (
     <div className="space-y-4 max-w-3xl">
-      <Link to="/vendas" className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1">
+      <Link
+        to="/vendas"
+        className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1"
+      >
         <ArrowLeft className="h-3 w-3" /> Vendas
       </Link>
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -75,8 +87,12 @@ function VendaDetalhes() {
           <p className="text-sm text-muted-foreground">{formatDateTime(v.criado_em)}</p>
         </div>
         <div className="flex items-center gap-2">
-          {v.status === "paga" && <Badge className="bg-success text-success-foreground">Paga</Badge>}
-          {v.status === "fiada" && <Badge className="bg-warning text-warning-foreground">Fiada</Badge>}
+          {v.status === "paga" && (
+            <Badge className="bg-success text-success-foreground">Paga</Badge>
+          )}
+          {v.status === "fiada" && (
+            <Badge className="bg-warning text-warning-foreground">Fiada</Badge>
+          )}
           {v.status === "cancelada" && <Badge variant="destructive">Cancelada</Badge>}
         </div>
       </div>
@@ -85,7 +101,7 @@ function VendaDetalhes() {
         <Info label="Cliente" value={v.clientes?.nome ?? "Sem cadastro"} />
         <Info label="Vendedor" value={data.vendedor?.nome ?? "-"} />
         <Info label="Pagamento" value={v.forma_pagamento.toUpperCase()} />
-        <Info label="Total" value={formatBRL(v.valor_total)} bold />
+        <Info label="Total" value={formatBRL(totalVenda)} bold />
       </div>
 
       <Card>

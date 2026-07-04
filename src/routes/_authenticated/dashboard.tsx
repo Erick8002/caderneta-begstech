@@ -57,11 +57,40 @@ function Dashboard() {
 
   const cards = [
     { to: "/vendas", label: "Vendas", icon: ShoppingCart, color: "bg-primary/10 text-primary" },
-    { to: "/estoque", label: "Estoque", icon: Package, color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" },
-    { to: "/clientes", label: "Clientes", icon: Users, color: "bg-sky-500/10 text-sky-700 dark:text-sky-400" },
-    { to: "/fornecedores", label: "Fornecedores", icon: Truck, color: "bg-amber-500/10 text-amber-700 dark:text-amber-400" },
-    { to: "/fiado", label: "Fiado", icon: CreditCard, color: "bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-400" },
-    ...(isAdmin ? [{ to: "/financeiro", label: "Financeiro", icon: Wallet, color: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400" }] : []),
+    {
+      to: "/estoque",
+      label: "Estoque",
+      icon: Package,
+      color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    },
+    {
+      to: "/clientes",
+      label: "Clientes",
+      icon: Users,
+      color: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+    },
+    {
+      to: "/fornecedores",
+      label: "Fornecedores",
+      icon: Truck,
+      color: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    },
+    {
+      to: "/fiado",
+      label: "Fiado",
+      icon: CreditCard,
+      color: "bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-400",
+    },
+    ...(isAdmin
+      ? [
+          {
+            to: "/financeiro",
+            label: "Financeiro",
+            icon: Wallet,
+            color: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
+          },
+        ]
+      : []),
   ];
 
   return (

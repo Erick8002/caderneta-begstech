@@ -49,7 +49,9 @@ function VendasPage() {
         // fallback sem embed de profiles se relacionamento não estiver visível
         const r2 = await supabase
           .from("vendas")
-          .select("id, criado_em, valor_total, forma_pagamento, status, vendedor_id, cliente_id, clientes(nome)")
+          .select(
+            "id, criado_em, valor_total, forma_pagamento, status, vendedor_id, cliente_id, clientes(nome)",
+          )
           .order("criado_em", { ascending: false })
           .limit(200);
         if (r2.error) throw r2.error;
@@ -92,7 +94,9 @@ function VendasPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Vendas</h1>
-          <p className="text-sm text-muted-foreground">{filtradas.length} de {vendas.length}</p>
+          <p className="text-sm text-muted-foreground">
+            {filtradas.length} de {vendas.length}
+          </p>
         </div>
         <Link to="/vendas/nova">
           <Button size="lg">
@@ -106,7 +110,12 @@ function VendasPage() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
             <div className="relative md:col-span-2">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Cliente ou vendedor…" className="pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} />
+              <Input
+                placeholder="Cliente ou vendedor…"
+                className="pl-9"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
             </div>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>
@@ -157,13 +166,19 @@ function VendasPage() {
                       {formatDateTime(v.criado_em)}
                     </Link>
                   </TableCell>
-                  <TableCell>{v.clientes?.nome ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                  <TableCell>
+                    {v.clientes?.nome ?? <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell>{perfilMap[v.vendedor_id] ?? "—"}</TableCell>
                   <TableCell className="uppercase text-xs">{v.forma_pagamento}</TableCell>
                   <TableCell className="font-medium">{formatBRL(v.valor_total)}</TableCell>
                   <TableCell>
-                    {v.status === "paga" && <Badge className="bg-success text-success-foreground">Paga</Badge>}
-                    {v.status === "fiada" && <Badge className="bg-warning text-warning-foreground">Fiada</Badge>}
+                    {v.status === "paga" && (
+                      <Badge className="bg-success text-success-foreground">Paga</Badge>
+                    )}
+                    {v.status === "fiada" && (
+                      <Badge className="bg-warning text-warning-foreground">Fiada</Badge>
+                    )}
                     {v.status === "cancelada" && <Badge variant="destructive">Cancelada</Badge>}
                   </TableCell>
                 </TableRow>

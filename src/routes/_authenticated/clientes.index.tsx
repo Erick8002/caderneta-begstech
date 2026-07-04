@@ -78,7 +78,9 @@ function ClientesPage() {
   });
 
   const filtrados = clientes.filter((c) =>
-    (c.nome + " " + (c.telefone ?? "") + " " + (c.cpf ?? "")).toLowerCase().includes(busca.toLowerCase()),
+    (c.nome + " " + (c.telefone ?? "") + " " + (c.cpf ?? ""))
+      .toLowerCase()
+      .includes(busca.toLowerCase()),
   );
 
   return (
@@ -161,10 +163,16 @@ function ClientesPage() {
               {filtrados.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell>
-                    <Link to="/clientes/$id" params={{ id: c.id }} className="hover:underline font-medium">
+                    <Link
+                      to="/clientes/$id"
+                      params={{ id: c.id }}
+                      className="hover:underline font-medium"
+                    >
                       {c.nome}
                     </Link>
-                    <div className="text-xs text-muted-foreground">Desde {formatDate(c.criado_em)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Desde {formatDate(c.criado_em)}
+                    </div>
                   </TableCell>
                   <TableCell>{c.telefone ?? "-"}</TableCell>
                   <TableCell>{c.qtd_compras}</TableCell>

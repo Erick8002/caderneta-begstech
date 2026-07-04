@@ -461,6 +461,17 @@ function EstoquePage() {
                               <p className="mt-1 text-sm font-medium text-primary">
                                 {formatBRL(p.valor_venda)}
                               </p>
+                              <div className="mt-1 space-y-0.5">
+                                <p className="text-sm font-medium text-primary">
+                                  Venda: {formatBRL(p.valor_venda)}
+                                </p>
+
+                                {isAdmin && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Custo: {formatBRL(p.valor_custo)}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                             <ChevronRight className="mt-1 h-4 w-4 text-muted-foreground" />
                           </div>

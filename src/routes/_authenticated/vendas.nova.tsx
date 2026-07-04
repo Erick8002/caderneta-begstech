@@ -204,7 +204,6 @@ function NovaVenda() {
                     className="rounded-2xl pl-9"
                   />
                 </div>
-                
               </div>
 
               <div className="h-[285px] overflow-y-auto pr-2 overscroll-contain rounded-2xl sm:h-[310px]">

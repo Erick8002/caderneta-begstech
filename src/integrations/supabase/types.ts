@@ -317,6 +317,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      alterar_limite_fiado: {
+        Args: { p_cliente_id: string; p_novo_limite: number }
+        Returns: undefined
+      }
+      cancelar_venda: { Args: { p_venda_id: string }; Returns: undefined }
+      criar_venda: {
+        Args: {
+          p_cliente_id: string
+          p_forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
+          p_itens: Json
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -325,6 +338,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      registrar_pagamento_fiado: {
+        Args: { p_cliente_id: string; p_observacao: string; p_valor: number }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "vendedor"

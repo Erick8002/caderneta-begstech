@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFornecedoresIndexRouteImport } from './routes/_authenticated/fornecedores.index'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 
@@ -35,6 +36,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFornecedoresIndexRoute =
+  AuthenticatedFornecedoresIndexRouteImport.update({
+    id: '/fornecedores/',
+    path: '/fornecedores/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClientesIndexRoute =
   AuthenticatedClientesIndexRouteImport.update({
     id: '/clientes/',
@@ -53,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/fornecedores/': typeof AuthenticatedFornecedoresIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -60,6 +68,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
+  '/fornecedores': typeof AuthenticatedFornecedoresIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,12 +78,25 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/_authenticated/fornecedores/': typeof AuthenticatedFornecedoresIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/clientes/$id' | '/clientes/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/clientes/$id'
+    | '/clientes/'
+    | '/fornecedores/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/dashboard' | '/' | '/clientes/$id' | '/clientes'
+  to:
+    | '/auth'
+    | '/dashboard'
+    | '/'
+    | '/clientes/$id'
+    | '/clientes'
+    | '/fornecedores'
   id:
     | '__root__'
     | '/_authenticated'
@@ -83,6 +105,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/clientes/$id'
     | '/_authenticated/clientes/'
+    | '/_authenticated/fornecedores/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -120,6 +143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fornecedores/': {
+      id: '/_authenticated/fornecedores/'
+      path: '/fornecedores'
+      fullPath: '/fornecedores/'
+      preLoaderRoute: typeof AuthenticatedFornecedoresIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clientes/': {
       id: '/_authenticated/clientes/'
       path: '/clientes'
@@ -142,6 +172,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedClientesIdRoute: typeof AuthenticatedClientesIdRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
+  AuthenticatedFornecedoresIndexRoute: typeof AuthenticatedFornecedoresIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -149,6 +180,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedClientesIdRoute: AuthenticatedClientesIdRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
+  AuthenticatedFornecedoresIndexRoute: AuthenticatedFornecedoresIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -204,9 +204,7 @@ function NovaVenda() {
                     className="rounded-2xl pl-9"
                   />
                 </div>
-                <Button type="button" variant="outline" size="icon" className="rounded-2xl">
-                  <Camera className="h-4 w-4" />
-                </Button>
+                
               </div>
 
               <div className="h-[285px] overflow-y-auto pr-2 overscroll-contain rounded-2xl sm:h-[310px]">
